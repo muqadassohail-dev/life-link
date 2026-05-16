@@ -1,11 +1,10 @@
 // components/BMICalculator.jsx
 import React, { useState, useEffect } from 'react';
-import { toast } from 'react-toastify';
 
-export default function BMICalculator({ onEligibilityChange }) {
-  const [age, setAge] = useState('');
-  const [weight, setWeight] = useState('');
-  const [height, setHeight] = useState('');
+export default function BMICalculator({ onEligibilityChange, embedded = false, initialAge = '', initialWeight = '', initialHeight = '' }) {
+  const [age, setAge] = useState(initialAge);
+  const [weight, setWeight] = useState(initialWeight);
+  const [height, setHeight] = useState(initialHeight);
   const [healthIssues, setHealthIssues] = useState([]);
   const [medications, setMedications] = useState([]);
   const [bmi, setBmi] = useState(null);
@@ -24,6 +23,22 @@ export default function BMICalculator({ onEligibilityChange }) {
     'Insulin', 'Chemotherapy', 'Immunosuppressants'
   ];
 
+  // Update parent when eligibility changes
+  useEffect(() => {
+    if (onEligibilityChange && age && weight && height) {
+      onEligibilityChange({
+        eligible: isEligible,
+        age: age,
+        weight: weight,
+        height: height,
+        details: eligibilityDetails,
+        bmi: bmi,
+        bmiCategory: bmiCategory
+      });
+    }
+  }, [isEligible, age, weight, height, eligibilityDetails]);
+
+  // Calculate when inputs change
   useEffect(() => {
     if (weight && height && age) {
       calculateBMI();
@@ -51,58 +66,55 @@ export default function BMICalculator({ onEligibilityChange }) {
     const details = [];
     let eligible = true;
 
+    // Age Check
     if (age < 18) {
-      details.push('Age must be at least 18 years');
+      details.push('❌ Age must be at least 18 years');
       eligible = false;
     } else if (age > 65) {
-      details.push('Age above 65 - Please consult doctor');
+      details.push('⚠️ Age above 65 - Please consult doctor');
       eligible = false;
     } else {
-      details.push('Age is within eligible range (18-65 years)');
+      details.push('✅ Age is within eligible range (18-65 years)');
     }
 
-    // Weight Check (minimum 50kg)
+    // Weight Check
     if (weight < 50) {
-      details.push('Weight must be at least 50 kg');
+      details.push('❌ Weight must be at least 50 kg');
       eligible = false;
     } else {
-      details.push('Weight meets minimum requirement (≥50 kg)');
+      details.push('✅ Weight meets minimum requirement (≥50 kg)');
     }
 
     // BMI Check
     if (bmi) {
       if (bmi < 18.5) {
-        details.push('Underweight - May need medical clearance');
+        details.push('⚠️ Underweight - May need medical clearance');
       } else if (bmi >= 18.5 && bmi < 25) {
-        details.push('BMI is in healthy range');
+        details.push('✅ BMI is in healthy range');
       } else if (bmi >= 25 && bmi < 30) {
-        details.push('Overweight - Generally eligible');
+        details.push('⚠️ Overweight - Generally eligible');
       } else {
-        details.push('Obese - May need doctor approval');
+        details.push('❌ Obese - May need doctor approval');
         eligible = false;
       }
     }
 
     // Health Issues Check
     if (healthIssues.length > 0) {
-      details.push(`Has health conditions: ${healthIssues.join(', ')} - Requires doctor consultation`);
+      details.push(`⚠️ Has health conditions: ${healthIssues.join(', ')} - Requires doctor consultation`);
     } else {
-      details.push('No major health conditions');
+      details.push('✅ No major health conditions');
     }
 
     // Medications Check
     if (medications.length > 0) {
-      details.push(`Taking medications: ${medications.join(', ')} - May affect eligibility`);
+      details.push(`⚠️ Taking medications: ${medications.join(', ')} - May affect eligibility`);
     } else {
-      details.push('No conflicting medications');
+      details.push('✅ No conflicting medications');
     }
 
     setEligibilityDetails(details);
     setIsEligible(eligible && healthIssues.length === 0 && medications.length === 0);
-    
-    if (onEligibilityChange) {
-      onEligibilityChange({ eligible, details, bmi, bmiCategory });
-    }
   };
 
   const handleHealthIssueToggle = (issue) => {
@@ -125,22 +137,73 @@ export default function BMICalculator({ onEligibilityChange }) {
     return 'text-red-600';
   };
 
+  if (embedded) {
+    return (
+      <div className='bg-white rounded-xl shadow-md border p-5 space-y-4'>
+        <h3 className='text-md font-bold text-gray-800 flex items-center gap-2'>
+          <span>🩺</span> Donor Eligibility Checker
+        </h3>
+        
+        <div className='grid grid-cols-3 gap-3'>
+          <input
+            type="number"
+            value={age}
+            onChange={(e) => setAge(parseInt(e.target.value) || '')}
+            className='px-2 py-1.5 border rounded-md text-sm focus:ring-2 focus:ring-red-500'
+            placeholder="Age"
+            min="18"
+            max="65"
+          />
+          <input
+            type="number"
+            value={weight}
+            onChange={(e) => setWeight(parseInt(e.target.value) || '')}
+            className='px-2 py-1.5 border rounded-md text-sm focus:ring-2 focus:ring-red-500'
+            placeholder="Weight (kg)"
+            min="50"
+          />
+          <input
+            type="number"
+            value={height}
+            onChange={(e) => setHeight(parseInt(e.target.value) || '')}
+            className='px-2 py-1.5 border rounded-md text-sm focus:ring-2 focus:ring-red-500'
+            placeholder="Height (cm)"
+            min="100"
+          />
+        </div>
+
+        {bmi && (
+          <div className='text-center'>
+            <p className='text-sm text-gray-500'>Your BMI</p>
+            <p className={`text-2xl font-bold ${getBMIColor()}`}>{bmi}</p>
+            <p className={`text-xs ${getBMIColor()}`}>{bmiCategory}</p>
+          </div>
+        )}
+
+        {age && weight && height && (
+          <div className={`text-xs p-2 rounded ${isEligible ? 'bg-green-50 text-green-700' : 'bg-yellow-50 text-yellow-700'}`}>
+            {isEligible ? '✅ You are eligible to donate blood!' : '⚠️ Please check requirements'}
+          </div>
+        )}
+      </div>
+    );
+  }
+
   return (
     <div className='bg-white rounded-xl shadow-md border p-6 space-y-6'>
       <div>
-        <h3 className='text-lg font-bold text-gray-800 mb-2'>Donor Eligibility Checker</h3>
+        <h3 className='text-lg font-bold text-gray-800 mb-2'>🩺 Donor Eligibility Checker</h3>
         <p className='text-sm text-gray-500'>Check if you're eligible to donate blood based on health parameters</p>
       </div>
 
-      {/* Input Fields */}
       <div className='grid grid-cols-1 md:grid-cols-3 gap-4'>
         <div>
           <label className='block text-sm font-medium text-gray-700 mb-1'>Age (years) *</label>
           <input
             type="number"
             value={age}
-            onChange={(e) => setAge(parseInt(e.target.value))}
-            className='w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-red-500'
+            onChange={(e) => setAge(parseInt(e.target.value) || '')}
+            className='w-full px-3 py-2 border rounded-md focus:ring-2 focus:ring-red-500'
             placeholder="18-65"
             min="18"
             max="65"
@@ -151,8 +214,8 @@ export default function BMICalculator({ onEligibilityChange }) {
           <input
             type="number"
             value={weight}
-            onChange={(e) => setWeight(parseInt(e.target.value))}
-            className='w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-red-500'
+            onChange={(e) => setWeight(parseInt(e.target.value) || '')}
+            className='w-full px-3 py-2 border rounded-md focus:ring-2 focus:ring-red-500'
             placeholder="Minimum 50 kg"
             min="50"
           />
@@ -162,8 +225,8 @@ export default function BMICalculator({ onEligibilityChange }) {
           <input
             type="number"
             value={height}
-            onChange={(e) => setHeight(parseInt(e.target.value))}
-            className='w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-red-500'
+            onChange={(e) => setHeight(parseInt(e.target.value) || '')}
+            className='w-full px-3 py-2 border rounded-md focus:ring-2 focus:ring-red-500'
             placeholder="e.g., 170"
             min="100"
             max="250"
@@ -171,19 +234,15 @@ export default function BMICalculator({ onEligibilityChange }) {
         </div>
       </div>
 
-      {/* BMI Display */}
       {bmi && (
         <div className='bg-gray-50 rounded-lg p-4 text-center'>
           <p className='text-sm text-gray-500'>Your BMI</p>
           <p className={`text-3xl font-bold ${getBMIColor()}`}>{bmi}</p>
           <p className={`text-sm font-medium ${getBMIColor()}`}>{bmiCategory}</p>
-          <p className='text-xs text-gray-400 mt-1'>
-            Normal BMI: 18.5 - 24.9
-          </p>
+          <p className='text-xs text-gray-400 mt-1'>Normal BMI: 18.5 - 24.9</p>
         </div>
       )}
 
-      
       <div>
         <label className='block text-sm font-medium text-gray-700 mb-2'>Health Conditions (Select if any)</label>
         <div className='flex flex-wrap gap-2'>
@@ -243,7 +302,7 @@ export default function BMICalculator({ onEligibilityChange }) {
       )}
 
       <div className='bg-blue-50 rounded-lg p-4'>
-        <p className='font-semibold text-blue-800 mb-2'> Before Donating Blood:</p>
+        <p className='font-semibold text-blue-800 mb-2'>💡 Before Donating Blood:</p>
         <ul className='text-sm text-blue-700 space-y-1'>
           <li>• Get a good night's sleep (7-8 hours)</li>
           <li>• Eat a healthy meal 2-3 hours before donation</li>

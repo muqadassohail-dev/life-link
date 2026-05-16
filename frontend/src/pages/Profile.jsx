@@ -32,6 +32,7 @@ export default function Profile() {
   }, [token]);
 
   const handleEligibilityChange = (result) => {
+    console.log("Eligibility result:", result);
     setEligibility(result);
   };
 
@@ -116,6 +117,10 @@ export default function Profile() {
     }
     if (!eligibility.eligible) {
       toast.error('You do not meet the eligibility requirements');
+      return;
+    }
+    if (!eligibility.age || !eligibility.weight) {
+      toast.error('Please fill in age and weight in the BMI calculator');
       return;
     }
 
@@ -203,7 +208,7 @@ export default function Profile() {
             {user.isDonor ? (
               <div className='mt-3'>
                 <span className='px-3 py-1 bg-green-100 text-green-700 rounded-full text-sm font-medium'>
-                  Blood Donor
+                  🩸 Blood Donor
                 </span>
                 {user.donorInfo?.verified && (
                   <span className='ml-2 px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-sm font-medium'>
@@ -240,7 +245,7 @@ export default function Profile() {
                   onClick={() => setEditing(true)}
                   className='w-full bg-red-600 text-white py-2 rounded-lg font-semibold hover:bg-red-700 transition'
                 >
-                  Become a Donor
+                  🩸 Become a Donor
                 </button>
               ) : (
                 <>
@@ -252,10 +257,16 @@ export default function Profile() {
                         : 'bg-gray-300 text-gray-700 hover:bg-gray-400'
                     }`}
                   >
-                    {user.donorInfo?.available ? 'Available for Donation' : 'Set as Available'}
+                    {user.donorInfo?.available ? '✅ Available for Donation' : '❌ Set as Available'}
                   </button>
                   
-                  
+                  {/* Donation History Button */}
+                  <button
+                    onClick={() => navigate('/donation-history')}
+                    className='w-full bg-purple-600 text-white py-2 rounded-lg font-semibold hover:bg-purple-700 transition flex items-center justify-center gap-2'
+                  >
+                    📜 View Donation History
+                  </button>
                 </>
               )}
               
@@ -263,7 +274,7 @@ export default function Profile() {
                 onClick={() => setEditing(!editing)}
                 className='w-full border border-gray-300 text-gray-700 py-2 rounded-lg font-semibold hover:bg-gray-50 transition'
               >
-                Edit Profile
+                ✏️ Edit Profile
               </button>
             </div>
           </div>
@@ -340,7 +351,10 @@ export default function Profile() {
               {/* BMI Calculator - Combined with Age, Weight, Health Check */}
               {!user.isDonor && (
                 <div className='mt-2'>
-                  <BMICalculator onEligibilityChange={handleEligibilityChange} embedded={false} />
+                  <BMICalculator 
+                    onEligibilityChange={handleEligibilityChange} 
+                    embedded={false}
+                  />
                 </div>
               )}
 
@@ -395,7 +409,7 @@ export default function Profile() {
                       : 'bg-red-600 text-white hover:bg-red-700'
                   }`}
                 >
-                  {user.isDonor ? 'Save Changes' : 'Register as Donor'}
+                  {user.isDonor ? 'Save Changes' : 'Register as Donor 🩸'}
                 </button>
                 <button type='button' onClick={() => setEditing(false)} className='flex-1 border border-gray-300 text-gray-700 py-2 rounded-lg font-semibold hover:bg-gray-50'>
                   Cancel
@@ -404,7 +418,7 @@ export default function Profile() {
 
               {!user.isDonor && !eligibility.eligible && (
                 <p className='text-xs text-red-500 text-center mt-2'>
-                  Please fill in your Age, Weight, and Height in the BMI Calculator above to check eligibility
+                  ⚠️ Please fill in your Age, Weight, and Height in the BMI Calculator above to check eligibility
                 </p>
               )}
             </form>
