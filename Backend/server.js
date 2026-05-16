@@ -15,7 +15,7 @@ const port = process.env.PORT || 4000;
 
 app.use(express.json());
 app.use(cors({
-    origin: ["https://6a08cddbf76fce7b5d584e83--life-link-admin.netlify.app", "https://6a08d093ac4dd48a3b223fdb--life-link243.netlify.app", "http://localhost:3000"],
+    origin: ["https://6a08cddbf76fce7b5d584e83--life-link-admin.netlify.app", "https://6a08d726228bf99129d98f0a--life-link243.netlify.app", "http://localhost:3000"],
     credentials: true,
 }));
 
